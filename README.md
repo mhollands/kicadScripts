@@ -16,7 +16,7 @@ A collection of scripts to automate PCB rendering and exporting gerbers.
 Script must be launched from Kicad scripting console.
 1. Launch console
 2. cd to directory of script with `cd <pathToThisDirectory>`
-3. set filename variable to the path to your .kicad_pcb file with `filename = <PathToYourAwesomeProject.kicad_pcb>`
+3. Set filename variable to the path to your .kicad_pcb file with `filename = <PathToYourAwesomeProject.kicad_pcb>`
 4. Execute script with `execfile("plot_board.py")`
 
 ## Create a GerberZip
