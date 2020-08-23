@@ -397,8 +397,12 @@ def render(plot_plan, output_filename):
 #Slight hack for etree. to remove 'ns0:' from output
 ET.register_namespace('', "http://www.w3.org/2000/svg")
 
+# If launching from kicad scripting console we may already have defined filename variable, otherwise get from system args
+try:
+	print("Detected existing variable 'filename'={0}".format(filename))
+except NameError:
+	filename=sys.argv[1]
 
-filename=sys.argv[1]
 project_name = os.path.splitext(os.path.split(filename)[1])[0]
 project_path = os.path.abspath(os.path.split(filename)[0])
 
