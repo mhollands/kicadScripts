@@ -19,13 +19,17 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from shutil import copy
 
+if sys.platform == "darwin":
+    running_on_mac = True
+
 try:
     import pcbnew
     from pcbnew import *
 except:
     print("PCBNew not found, are you using KiCAD included Python ?")
+    if(running_on_mac):
+    	print("On a Mac you may need to launch the script from inside of KiCad")
     exit()
-    
 
 greenStandard = {
 	'Copper' : ['#E8D959',0.85],
@@ -334,46 +338,61 @@ def render(plot_plan, output_filename):
 	# x0,y0 are bottom LEFT corner
 	dpi = 1200
 
-	scale = 3.779
-	mmscale = 1000000.0
+	if(not running_on_mac):
+		scale = 3.779
+		mmscale = 1000000.0
 
-	yMax = 210070000
+		yMax = 210070000
 
-	x0 = (bb.GetX() / mmscale) * scale
-	y0 = ((yMax - (bb.GetY() + bb.GetHeight())) / mmscale) * scale
-	x1 = ((bb.GetX() + bb.GetWidth()) / mmscale) * scale
-	y1 = ((yMax - (bb.GetY())) / mmscale) * scale
+		x0 = (bb.GetX() / mmscale) * scale
+		y0 = ((yMax - (bb.GetY() + bb.GetHeight())) / mmscale) * scale
+		x1 = ((bb.GetX() + bb.GetWidth()) / mmscale) * scale
+		y1 = ((yMax - (bb.GetY())) / mmscale) * scale
 
-	#x0 -= 10
-	#y0 -= 10
-	#x1 += 10
-	#y1 += 10
+		#x0 -= 10
+		#y0 -= 10
+		#x1 += 10
+		#y1 += 10
 
-	if bMirrorMode:
-		x0 = -x0
+		if bMirrorMode:
+			x0 = -x0
 		x1 = -x1
-
-	version = subprocess.check_output(['inkscape', '--version'], stderr=subprocess.STDOUT).split()
-	if len(version) > 1 and version[1] < "1.0":
-		subprocess.check_call([
-			'inkscape',
-			'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
-			'--export-dpi={}'.format(dpi),
-			'--export-png', final_png,
-			'--export-background', colours['BackGround'][0],
-			final_svg,
-		])
+		version = subprocess.check_output(['inkscape', '--version'], stderr=subprocess.STDOUT).split()
+		if len(version) > 1 and version[1] < "1.0":
+			command = [
+						'inkscape',
+						'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
+						'--export-dpi={}'.format(dpi),
+						'--export-png', final_png,
+						'--export-background', colours['BackGround'][0],
+						final_svg,
+						]
+		else:
+			command = [
+						'inkscape',
+						'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
+						'--export-dpi={}'.format(dpi),
+						'--export-type=png',
+						'--export-filename={}'.format(final_png),
+						'--export-background', colours['BackGround'][0],
+						final_svg,
+						]
 	else:
-		subprocess.check_call([
-			'inkscape',
-			'--export-area={}:{}:{}:{}'.format(x0,y0,x1,y1),
-			'--export-dpi={}'.format(dpi),
-			'--export-type=png',
-			'--export-filename={}'.format(final_png),
-			'--export-background', colours['BackGround'][0],
-			final_svg,
-		])
-
+		inkscape_bin = '/Applications/Inkscape.app/Contents/MacOS/inkscape'
+		version = subprocess.check_output([inkscape_bin, '--version'], stderr=subprocess.STDOUT).split()
+		if(len(version) <= 1):
+			print("Unexpected response to inkscape version query.")
+		if version[1] != "1.0":
+			print("Untested version of inkscape on Mac")
+		command = [
+						inkscape_bin,
+						'--export-area-drawing',
+						'--export-dpi={}'.format(dpi),
+						'--export-filename', final_png,
+						'--export-background', colours['BackGround'][0],
+						final_svg,
+					]
+	subprocess.check_call(command)
 
 #Slight hack for etree. to remove 'ns0:' from output
 ET.register_namespace('', "http://www.w3.org/2000/svg")
